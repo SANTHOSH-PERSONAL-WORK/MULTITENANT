@@ -10,7 +10,7 @@ require('dotenv').config();
 const { dbConnection } = require("./db-connection");
 const TenantInfo = require("./schema/tenant-schema");
 const UserSchema = require("./schema/user-schema");
-const tenantMiddleware = require("./middleware/tenant-middleware");
+const {tenantMiddleware, tenantConnection} = require("./middleware/tenant-middleware");
 
 const app = express();
 const PORT = 3001;
@@ -41,7 +41,7 @@ app.post("/api/tenant/register", async (req, res) => {
     }
 
     await TenantInfo.create({ name, domain, dbURI, password: hashedPassword });
-
+    await tenantConnection();
     res.status(201).json({ message: "Tenant registered successfully" });
   } catch (error) {
     res.status(500).send({ "InternalServerError": error.message });
@@ -141,7 +141,8 @@ app.put("/api/tenant/:tenantDomain/updateUser", async (req, res) => {
 
 
 dbConnection()
-  .then((message) => {
+  .then( async(message) => {
+    await tenantConnection();
     app.listen(PORT, () => {
       console.log(`${message}\nServer running on Port : ${PORT}`);
     });

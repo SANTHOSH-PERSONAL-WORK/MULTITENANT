@@ -11,7 +11,6 @@ const getTenantConnection = async (tenantDomain) => {
 
     const connection = mongoose.createConnection(tenant.dbURI);
     connectionPool[tenantDomain] = connection;
-console.log(connectionPool,'san')
   }
   return connectionPool[tenantDomain];
 };
@@ -30,4 +29,21 @@ const tenantMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = tenantMiddleware;
+const tenantConnection = async () => {
+  try {
+    const findTenants = await Tenant.find();
+    for (const tenant of findTenants) {
+      const { domain, dbURI } = tenant;
+      if (!connectionPool[domain]) {
+        const connection = mongoose.createConnection(dbURI);
+        connectionPool[domain] = connection;
+        console.log(`connection establised for tenant : ${domain}`)
+      }
+    }
+  } catch (error) {
+    console.log("error")
+  }
+
+}
+
+module.exports = {tenantMiddleware, tenantConnection};
